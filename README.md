@@ -329,16 +329,4 @@ Full 5-stage instruction pipeline and pc-increment description Waveform is given
 
 ![VirtualBox_vdsworkshop_03_02_2025_19_57_19](https://github.com/user-attachments/assets/abc1afa2-2cfe-4d47-b8c8-37ef74456910)
 
-
-
-
-
-
-
-
-
-
-
-
-
 </details>
