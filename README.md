@@ -376,6 +376,13 @@ These pins receive on/off signals from the processor to control the respective s
 | g           | PD6    |
 | CA/CC       | VCC/GND |
 
+
+</details>
+
+<details>
+<summary> <b>Task 6</b></summary>
+<br>
+
 ## Code Uploaded on the Board
 ```c
 #include <ch32v00x.h>
@@ -466,4 +473,9 @@ void assign(int num) {
     }
 }
 ```
+
+![capture_img](https://github.com/user-attachments/assets/a489ec77-8ad3-4c21-88ef-e291d51e6fdd)
+
+
+
 </details>
