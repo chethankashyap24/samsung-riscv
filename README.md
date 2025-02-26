@@ -335,46 +335,48 @@ Full 5-stage instruction pipeline and pc-increment description Waveform is given
 <summary> <b>Task 5</b></summary>
 <br>
 
-# 7-Segment Display Driver using VSDSquadron Mini
+# 💡 Motion-Activated Lighting System
 
-## Overview
-This project demonstrates the integration of the CH32V003 RISC-V processor to develop a 7-segment LED display driver. The processor decodes the given number into its binary representation and controls the segments accordingly, automating the display process. Instead of manually setting the display each time, this approach simplifies the operation. Currently, a single 7-segment display is being controlled, with future enhancements planned for integrating multiple displays.
+This project showcases a **motion-activated lighting system** that utilizes an IR sensor to detect movement. Upon sensing motion, the connected LED lights up and blinks three times, providing a visual alert.
 
-## Components Required
-- VSDSquadron Mini
-- 7-segment display (Common Anode/Cathode)
-- Breadboard
-- Power supply
-- Jumper wires
-- Resistors
+---
 
-## Circuit Connection
-1. Connect the Common Anode/Cathode pin to VCC or GND via a resistor, depending on the display type.
-2. Wire the segment pins to the microcontroller as follows:
-   - **PD0** → Segment **a**
-   - **PC0** → Segment **b**
-   - **PD2** → Segment **c**
-   - **PD3** → Segment **d**
-   - **PD4** → Segment **e**
-   - **PD5** → Segment **f**
-   - **PD6** → Segment **g**
+## 🧰 Components Needed
+- **VSDSquadron Mini Board**  
+- **Infrared (IR) Sensor**  
+- **LED**  
+- **Breadboard**  
+- **USB Cable**  
+- **Jumper Wires**  
 
-These pins receive on/off signals from the processor to control the respective segments of the display.
+---
 
-![ckt_diag](https://github.com/user-attachments/assets/6f18c52c-88c6-477e-ae14-f5aac9cff178)
+## 🔗 Wiring Connections
 
+### IR Sensor to VSD Squadron Board:
+| **IR Sensor Pin** | **Connection Point** |
+|-------------------|---------------------|
+| VCC               | 3.2V Power Pin      |
+| GND               | Ground (GND)        |
+| OUT               | Digital Pin 4       |
 
-## Pin Connection Table
-| SEVEN SEGMENT | RISC-V |
-|--------------|--------|
-| a           | PD0    |
-| b           | PC0    |
-| c           | PD2    |
-| d           | PD3    |
-| e           | PD4    |
-| f           | PD5    |
-| g           | PD6    |
-| CA/CC       | VCC/GND |
+### LED to VSD Squadron Board:
+| **LED Pin** | **Connection Point** |
+|-------------|---------------------|
+| Anode (+)   | Digital Pin 6       |
+| Cathode (-) | Ground (GND)        |
+
+---
+
+## 🛠️ How It Works
+- The **IR sensor** monitors its surroundings for variations in infrared radiation, which occur when a person or object moves within its detection range.  
+- Upon detecting motion, it sends a signal to the **VSDSquadron Mini Board**.  
+- The board then activates the **LED**, making it **blink three times** to indicate the detected motion.  
+
+---
+
+![connection](https://github.com/user-attachments/assets/139b238c-9aa1-4a55-b6b3-a3d3e40401c8)
+
 
 
 </details>
@@ -388,94 +390,74 @@ These pins receive on/off signals from the processor to control the respective s
 #include <ch32v00x.h>
 #include <debug.h>
 
-// Define the GPIO pins for the driver
-#define a GPIO_Pin_0        // Pin for segment a
-#define b GPIO_Pin_1        // Pin for segment b (corrected to a different pin)
-#define c GPIO_Pin_2        // Pin for segment c
-#define d GPIO_Pin_3        // Pin for segment d      
-#define e GPIO_Pin_4        // Pin for segment e    
-#define f GPIO_Pin_5        // Pin for segment f    
-#define g GPIO_Pin_6        // Pin for segment g    
-
-int outar[] = {0, 0, 0, 0, 0, 0, 0};
-int out[] = {126, 48, 109, 121, 51, 91, 95, 112, 127, 123, 119, 31, 78, 61, 79, 71};
-
-// Function prototypes
-void GPIO_Config(void);
-void assign(int);
-
-// GPIO configuration function
 void GPIO_Config(void) {
     GPIO_InitTypeDef GPIO_InitStructure = {0};
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE); // Enable clock for Port D
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE); // Enable clock for Port C
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-    // Configure pin a as output
-    GPIO_InitStructure.GPIO_Pin = a;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // Configure pin b as output
-    GPIO_InitStructure.GPIO_Pin = b;
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-    // Configure pin c as output
-    GPIO_InitStructure.GPIO_Pin = c;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // Configure pin d as output
-    GPIO_InitStructure.GPIO_Pin = d;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // Configure pin e as output
-    GPIO_InitStructure.GPIO_Pin = e;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // Configure pin f as output
-    GPIO_InitStructure.GPIO_Pin = f;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // Configure pin g as output
-    GPIO_InitStructure.GPIO_Pin = g;
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
 }
 
-int main() {
-    // SystemCoreClockUpdate(); // Uncomment if needed
+int main(void) {
+    uint8_t IR = 0, set = 1, reset = 0, a = 0;
+
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+    SystemCoreClockUpdate();
     Delay_Init();
     GPIO_Config();
-    
+
     while (1) {
-        for (int i = 0; i < 16; i++) {
-            assign(i);
-            
-            // Set the GPIO pins based on the outar array
-            GPIO_WriteBit(GPIOD, a, outar[6] ? SET : RESET);
-            GPIO_WriteBit(GPIOC, b, outar[5] ? SET : RESET);
-            GPIO_WriteBit(GPIOD, c, outar[4] ? SET : RESET);
-            GPIO_WriteBit(GPIOD, d, outar[3] ? SET : RESET);
-            GPIO_WriteBit(GPIOD, e, outar[2] ? SET : RESET);
-            GPIO_WriteBit(GPIOD, f, outar[1] ? SET : RESET);
-            GPIO_WriteBit(GPIOD, g, outar[0] ? SET : RESET);
-            
-            Delay_Ms(5000); // Delay for 5 seconds
+        IR = GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_4);
+        if (IR == 1) {
+            for (a = 0; a < 3; a++) {
+                GPIO_WriteBit(GPIOD, GPIO_Pin_6, set);
+                Delay_Ms(200);
+                GPIO_WriteBit(GPIOD, GPIO_Pin_6, reset);
+                Delay_Ms(100);
+            }
         }
     }
 }
 
-void assign(int num) {
-    int mask = 1;
-    for (int i = 0; i < 7; i++) {
-        outar[i] = (mask & out[num]) ? 1 : 0; // Set outar based on the current number
-        mask = mask << 1; // Shift the mask to check the next bit
-    }
-}
 ```
 
-![capture_img](https://github.com/user-attachments/assets/a489ec77-8ad3-4c21-88ef-e291d51e6fdd)
+---
 
+![pic1](https://github.com/user-attachments/assets/a43c7909-a79e-4f57-a0fa-0e2868e7d7a9)
+
+---
+
+![pic2](https://github.com/user-attachments/assets/8825addc-efc1-49d2-acb0-8690c56a6f62)
+
+---
+
+## Applications
+
+### 1. Security Lighting
+- Automatically illuminates outdoor spaces (gardens, driveways, pathways).
+- Deters potential intruders and enhances visibility at night.
+### 2. Home Automation
+- Ideal for hallways, staircases, and bathrooms.
+- Lights activate upon detecting occupancy, improving safety and convenience.
+### 3. Energy Efficiency
+- Prevents unnecessary energy consumption by turning off lights in unoccupied areas.
+- Promotes sustainable living and reduces electricity costs.
+### 4. Accessibility
+- Provides automatic lighting for individuals with disabilities.
+- Eases navigation through motion-activated illumination.
+
+
+## Conclusion
+
+During the VSD Squadron mini internship, I embarked on an enriching journey exploring various aspects of VLSI system design on the RISC-V architecture, alongside open-source EDA tools. This experience broadened my understanding of the design flow, from RTL design and synthesis to physical design and verification. Working with industry-standard tools and applying theoretical knowledge to practical scenarios significantly enhanced my technical skills and problem-solving abilities.
+
+Collaborating with like-minded peers and mentors provided valuable insights into real-world challenges faced in VLSI design. The internship not only deepened my grasp of the RISC-V architecture but also emphasized the importance of open-source solutions in the semiconductor industry. Overall, this experience has been instrumental in shaping my career aspirations and has motivated me to further explore the field of VLSI and processor architecture.
 
 
 </details>
