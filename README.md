@@ -429,13 +429,20 @@ int main(void) {
 
 ---
 
-![pic1](https://github.com/user-attachments/assets/a43c7909-a79e-4f57-a0fa-0e2868e7d7a9)
+![pic2](https://github.com/user-attachments/assets/c2b3838d-003e-46a1-b24a-7037408032dc)
+
 
 ---
 
-![pic2](https://github.com/user-attachments/assets/8825addc-efc1-49d2-acb0-8690c56a6f62)
+![pic1](https://github.com/user-attachments/assets/0c3d61ae-d12e-46a9-8674-e6b31ceb02de)
+
 
 ---
+
+### Video link
+
+https://drive.google.com/file/d/1qXvyzJ8pRrVelI8LxVsKQ2qxCFyppyDF/view?usp=drivesdk
+
 
 ## Applications
 
